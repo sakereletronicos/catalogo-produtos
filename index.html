@@ -1,219 +1,318 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Catálogo Digital</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Catálogo Integrado com Google Sheets</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
-    header, footer { background: #333; color: white; padding: 1rem; text-align: center; }
-    .filtros { background: white; padding: 1rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
-    .filtros input, .filtros select { padding: 0.5rem; font-size: 1rem; }
-    .catalogo { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; padding: 2rem; }
-    .produto { background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: transform .2s; }
-    .produto:hover { transform: scale(1.02); }
-    .produto a { display: block; text-decoration: none; color: inherit; padding: 1rem; }
-    .produto img { max-width: 100%; border-radius: 5px; }
-    .produto h2 { margin: 0.5rem 0; font-size: 1.2rem; }
-    .produto .preco { color: #009688; font-weight: bold; }
-    pre { background: #222; color: #0f0; padding: 1rem; font-size: 0.8rem; overflow-x: auto; }
+    :root {
+      --primary-color: #121212;
+      --secondary-color: #1e1e1e;
+      --accent-color: #ff5252;
+      --text-color: #ddd;
+      --card-bg: #222;
+      --border-color: #333;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--secondary-color);
+      color: var(--text-color);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 2rem 1rem;
+      text-align: center;
+    }
+    header h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+    .filtros {
+      background-color: var(--primary-color);
+      padding: 1.5rem 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      border-bottom: 1px solid var(--border-color);
+      align-items: center;
+    }
+    .search-wrapper {
+      position: relative;
+      width: 300px;
+      max-width: 100%;
+    }
+    .search-wrapper input[type="search"] {
+      width: 100%;
+      padding: 10px 40px 10px 12px;
+      font-size: 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      outline: none;
+      color: var(--text-color);
+      background-color: var(--secondary-color);
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .search-wrapper input[type="search"]::placeholder {
+      color: #777;
+    }
+    .search-wrapper input[type="search"]:focus {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 6px var(--accent-color);
+    }
+    .search-wrapper svg {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      stroke: #777;
+      pointer-events: none;
+      transition: stroke 0.3s ease;
+    }
+    .search-wrapper input[type="search"]:focus + svg {
+      stroke: var(--accent-color);
+    }
+    .filtros select {
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      min-width: 180px;
+      background: var(--secondary-color);
+      color: var(--text-color);
+      transition: border-color 0.3s ease;
+    }
+    .filtros select:focus {
+      border-color: var(--accent-color);
+      outline: none;
+      box-shadow: 0 0 6px var(--accent-color);
+    }
+    .catalogo {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      padding: 2rem;
+      flex-grow: 1;
+      background-color: var(--secondary-color);
+    }
+    .produto {
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.7);
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      border: 1px solid var(--border-color);
+    }
+    .produto:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 25px rgba(255, 82, 82, 0.7);
+      border-color: var(--accent-color);
+    }
+    .produto a {
+      color: inherit;
+      text-decoration: none;
+      display: block;
+      height: 100%;
+    }
+    .produto img {
+      width: 100%;
+      height: 220px;
+      object-fit: contain;
+      background-color: #FFFFFF;
+      display: block;
+      border-radius: 12px 12px 0 0;
+    }
+    .produto h2, .produto h3 {
+      font-size: 1.1rem;
+      padding: 1rem 1rem 0 1rem;
+      color: var(--text-color);
+    }
+    .produto p {
+      padding: 0 1rem 1rem 1rem;
+      color: #aaa;
+    }
+    .produto .preco {
+      padding: 0 1rem 1rem 1rem;
+      font-weight: bold;
+      color: var(--accent-color);
+      font-size: 1.2rem;
+    }
+    footer {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    #debug {
+      display: none;
+    }
+    .whatsapp-float {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 999;
+      animation: flutuar 2.5s ease-in-out infinite;
+    }
+    .whatsapp-float img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      transition: transform 0.3s ease;
+    }
+    .whatsapp-float img:hover {
+      transform: scale(1.1);
+    }
+    @keyframes flutuar {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-8px);
+      }
+    }
   </style>
 </head>
 <body>
+  <header>
+    <h1>Catálogo de Produtos</h1>
+  </header>
 
-<header><h1>Catálogo de Produtos</h1></header>
+  <section class="filtros">
+    <div class="search-wrapper">
+      <input id="busca" type="search" placeholder="Procure pelo nome de seu produto" aria-label="Pesquisar" autocomplete="off" />
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+    </div>
 
-<section class="filtros">
-  <input id="busca" type="text" placeholder="Buscar por nome...">
-  <select id="categoria">
-    <option value="">Todas categorias</option>
-  </select>
-  <select id="preco">
-    <option value="">Todos os preços</option>
-    <option value="0-100">Até R$100</option>
-    <option value="100-200">R$100 a R$200</option>
-    <option value="200-99999">Acima de R$200</option>
-  </select>
-</section>
+    <select id="categoria">
+      <option value="">Todas categorias</option>
+    </select>
+    <select id="preco">
+      <option value="">Todos os preços</option>
+      <option value="0-100">Até R$100</option>
+      <option value="100-200">R$100 a R$200</option>
+      <option value="200-99999">Acima de R$200</option>
+    </select>
+  </section>
 
-<section id="catalogo" class="catalogo"></section>
-<pre id="debug">Carregando produtos locais...</pre>
-<footer>&copy; 2025 Catálogo</footer>
+  <section id="catalogo" class="catalogo"></section>
 
-<script>
-const debug = document.getElementById('debug');
-const catalogoEl = document.getElementById("catalogo");
-const buscaEl = document.getElementById("busca");
-const categoriaEl = document.getElementById("categoria");
-const precoEl = document.getElementById("preco");
+  <footer>
+    <p>Caso tenha interesse em algum produto que não está no catálogo, nos contate!</p>
+    <p>&copy; 2025 Catálogo</p>
+  </footer>
 
-// 🔒 Lista de produtos definida localmente
-// MPE-C8530 https://mercadolivre.com/sec/2MSqXAX
-// Mala patinete https://mercadolivre.com/sec/2ud51qF
-// Triciclo drift https://mercadolivre.com/sec/1FELbNG
-const produtos = [
-  {
-    nome: "Triciclo Drift",
-    categoria: "Eletrônicos",
-    preco: 1589,
-    imagem: "https://http2.mlstatic.com/D_NQ_NP_934529-MLB83226801272_042025-O-triciclo-eletrico-drift-3-velocidade-250w-acelerador-punho.webp",
-    link: "https://mercadolivre.com/sec/1FELbNG"
-  },
-  {
-    nome: "Patinete Elétrico LED",
-    categoria: "Eletrônicos",
-    preco: 2469,
-    imagem: "https://http2.mlstatic.com/D_NQ_NP_720398-MLB81664139140_012025-O-patinete-eletrico-dobravel-urbano-potente-com-led.webp",
-    link: "https://mercadolivre.com/sec/2MSqXAX"
-  },
-  {
-    nome: "Bagagem Elétrica Inteligente ",
-    categoria: "Eletrônicos",
-    preco: 3394.03,
-    imagem: "https://http2.mlstatic.com/D_NQ_NP_724734-MLB86675310709_062025-O-bagagem-eletrica-scooter-mala-de-viagem-inteligente-30l.webp",
-    link: "https://mercadolivre.com/sec/2ud51qF"
-  },
-  {
-    nome: "Acelerador Triciclo Drift",
-    categoria: "Eletrônicos",
-    preco: 189.99,
-    imagem: "https://http2.mlstatic.com/D_NQ_NP_986768-MLB87638779467_072025-O-acelerador-com-chave-para-triciclo-eletrico-drift.webp",
-    link: "https://mercadolivre.com/sec/225jH1j"
-  },
-  {
-    nome: "Carregador Scooter Moto Elétrica",
-    categoria: "Eletrônicos",
-    preco: 279.80,
-    imagem: "https://http2.mlstatic.com/D_NQ_NP_982108-MLB83031809667_032025-O-carregador-scooter-moto-eletrica-72v-5a-bivolt-citycoco.webp",
-    link: "https://mercadolivre.com/sec/1y1tYC7"
-  },
-  {
-    nome: "Colchão Veicular Inflável",
-    categoria: "Camping",
-    preco: 279.80,
-    imagem: "https://http2.mlstatic.com/D_NQ_NP_906026-MLU69125964733_042023-O-cama-inflavel-colcho-solteiro-cinza-veicular-viagem-camping-made-basics.webp",
-    link: "https://mercadolivre.com/sec/11c5Ktw"
-  },
-  {
-    nome: "Assento Multifuncional",
-    categoria: "Acessórios",
-    preco: 284.90,
-    imagem: "https://http2.mlstatic.com/D_NQ_NP_950906-MLB83708285152_042025-O-assento-multifuncional-para-patinete-com-bola-armazenamento.webp",
-    link: "https://mercadolivre.com/sec/2JM8nRu"
-  },
-  {
-    nome: "Bateria De Triciclo E Hoverboard Elétrico",
-    categoria: "Eletrônicos",
-    preco: 189.90,
-    imagem: "https://http2.mlstatic.com/D_NQ_NP_641112-MLB84219782482_052025-O-bateria-de-triciclo-e-hoverboard-eletrico-drift-36v-4400mah.webp",
-    link: "https://mercadolivre.com/sec/1xQ3Nvc"
-  },
-  {
-    nome: "Inversor de Tensão 12v para 220v",
-    categoria: "Eletrônicos",
-    preco: 169.99,
-    imagem: "https://http2.mlstatic.com/D_NQ_NP_849732-MLA83158134205_032025-O.webp",
-    link: "https://mercadolivre.com/sec/2F9dZXJ"
-  },
-  {
-    nome: "Carregador Bike Elétrica 54.6v 2A",
-    categoria: "Eletrônicos",
-    preco: 295.99,
-    imagem: "https://http2.mlstatic.com/D_NQ_NP_844022-MLB87216996093_072025-O-fonte-carregador-scooter-bike-eletrica-546-2a-fonte-bivolt.webp",
-    link: "https://mercadolivre.com/sec/11b1C6k"
-  },
-  {
-    nome: "Bike Elétrica MBE-F12",
-    categoria: "Eletrônicos",
-    preco: 4683,
-    imagem: "https://www.tomate.tv/uploads/produtos/imagens/bicicleta-eletrica-mbe-f12-de290fa0a61845421c4657370f7e98a4.png",
-    link: "https://mercadolivre.com/sec/13yQYYX"
-  },
-  {
-    nome: "Raquete Elétrica DP-1215",
-    categoria: "Eletrônicos",
-    preco: 35.99,
-    imagem: "https://http2.mlstatic.com/D_NQ_NP_622589-MLA84701505449_052025-O.webp",
-    link: "https://mercadolivre.com/sec/15pSvy6"
-  },
-  {
-    nome: "Kit 25 pares de Luvas PU",
-    categoria: "Utilidades",
-    preco: 75.97,
-    imagem: "https://http2.mlstatic.com/D_NQ_NP_958238-MLB80462526904_112024-O-24-prs-luva-pu-tatil-black-multiuso-mecanico-servicos-gerais.webp",
-    link: "https://mercadolivre.com/sec/2fAJShZ"
-   },
-   {
-    nome: "Suporte de plantas",
-    categoria: "Utilidades",
-    preco: 449.80,
-    imagem: "https://http2.mlstatic.com/D_NQ_NP_800490-MLB79631820040_102024-O-carrinho-de-suporte-para-plantas-e-flores-em-ferro-4-vasos.webp",
-    link: "https://mercadolivre.com/sec/16jdK4A"
-   }
-];
+  <div class="whatsapp-float">
+    <a href="https://wa.me/5511958105948" target="_blank" aria-label="Fale conosco pelo WhatsApp">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/WhatsApp_icon.png" alt="WhatsApp" />
+    </a>
+  </div>
 
-// 💡 Utilitário para formatar o preço
-const formatador = new Intl.NumberFormat('pt-BR', {
-  style: 'currency',
-  currency: 'BRL'
-});
+  <script>
+    const spreadsheetId = '1yJqq-aL5oUnBtxb93bJy2JwLx3ccwuaoQz_UbHAI5_s';
+    const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json`;
 
-// 🎯 Popular categorias únicas
-function populaCategorias() {
-  const cats = [...new Set(produtos.map(p => p.categoria).filter(c => c))];
-  cats.forEach(cat => {
-    const op = document.createElement('option');
-    op.value = op.textContent = cat;
-    categoriaEl.appendChild(op);
-  });
-}
+    let produtos = [];
+    let colIndex = {}; // objeto para mapear nome da coluna -> índice
 
-// 🖼️ Exibir produtos no catálogo
-function renderProdutos(lista) {
-  catalogoEl.innerHTML = lista.length
-    ? lista.map(p => `
-      <div class="produto">
-        <a href="${p.link || '#'}" target="_blank">
-          <img src="${p.imagem || 'https://via.placeholder.com/250x150?text=Sem+Imagem'}" alt="${p.nome}">
-          <h2>${p.nome}</h2>
-          <p>${p.categoria}</p>
-          <div class="preco">${formatador.format(p.preco)}</div>
-        </a>
-      </div>
-    `).join('')
-    : "<p>Nenhum produto encontrado.</p>";
-}
+    fetch(url)
+      .then(res => res.text())
+      .then(txt => {
+        // Extrair JSON dentro do callback
+        const jsonStr = txt.match(/(?<=\().*(?=\);)/s)[0];
+        const json = JSON.parse(jsonStr);
 
-// 🔍 Filtragem dos produtos
-function filtrar() {
-  const busca = buscaEl.value.toLowerCase();
-  const cat = categoriaEl.value;
-  const pr = precoEl.value;
+        const cols = json.table.cols.map(c => c.label.trim().toLowerCase());
+        // Criar mapa coluna -> índice
+        cols.forEach((colName, i) => {
+          colIndex[colName] = i;
+        });
 
-  let filtrados = produtos.filter(p =>
-    p.nome.toLowerCase().includes(busca) &&
-    (cat === '' || p.categoria === cat)
-  );
+        // Ignorar primeira linha (cabeçalho) e mapear o resto
+        produtos = json.table.rows.slice(1).map(row => {
+          const c = row.c;
+          return {
+            nome: c[colIndex['nome']]?.v || '',
+            categoria: c[colIndex['categoria']]?.v || '',
+            preco: c[colIndex['preço']]?.v || '0',
+            link: c[colIndex['link']]?.v || '#',
+            imagem: c[colIndex['imagem']]?.v || ''
+          };
+        });
 
-  if (pr) {
-    const [min, max] = pr.split('-').map(Number);
-    filtrados = filtrados.filter(p => Number(p.preco) >= min && Number(p.preco) <= max);
-  }
+        populaCategorias();
+        renderProdutos(produtos);
+      })
+      .catch(console.error);
 
-  renderProdutos(filtrados);
-  debug.innerText = `🧮 Produtos exibidos: ${filtrados.length}`;
-}
+    const catalogoEl = document.getElementById('catalogo');
+    const buscaEl = document.getElementById('busca');
+    const categoriaEl = document.getElementById('categoria');
+    const precoEl = document.getElementById('preco');
 
-// 📦 Inicialização
-debug.innerText = `✅ Produtos carregados localmente: ${produtos.length}`;
-populaCategorias();
-renderProdutos(produtos);
+    function populaCategorias() {
+      const cats = [...new Set(produtos.map(p => p.categoria).filter(Boolean))];
+      cats.forEach(cat => {
+        const op = document.createElement('option');
+        op.value = op.textContent = cat;
+        categoriaEl.appendChild(op);
+      });
+    }
 
-// 📡 Eventos dos filtros
-buscaEl.addEventListener('input', filtrar);
-categoriaEl.addEventListener('change', filtrar);
-precoEl.addEventListener('change', filtrar);
-</script>
+    function renderProdutos(lista) {
+      catalogoEl.innerHTML = lista.length
+        ? lista.map(p => `
+          <div class="produto">
+            <a href="${p.link}" target="_blank" rel="noopener noreferrer">
+              <img src="${p.imagem}" alt="${p.nome}" />
+              <h2>${p.nome}</h2>
+              <p>${p.categoria}</p>
+              <div class="preco">R$ ${Number(p.preco).toFixed(2)}</div>
+            </a>
+          </div>
+        `).join('')
+        : '<p>Nenhum produto encontrado.</p>';
+    }
 
+    function filtrar() {
+      const b = buscaEl.value.toLowerCase();
+      const c = categoriaEl.value;
+      const pr = precoEl.value;
+
+      let filtrados = produtos.filter(p =>
+        p.nome.toLowerCase().includes(b) &&
+        (c === '' || p.categoria === c)
+      );
+
+      if (pr) {
+        const [min, max] = pr.split('-').map(Number);
+        filtrados = filtrados.filter(p => Number(p.preco) >= min && Number(p.preco) <= max);
+      }
+
+      renderProdutos(filtrados);
+    }
+
+    buscaEl.addEventListener('input', filtrar);
+    categoriaEl.addEventListener('change', filtrar);
+    precoEl.addEventListener('change', filtrar);
+  </script>
 </body>
 </html>
